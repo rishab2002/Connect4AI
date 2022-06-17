@@ -2,9 +2,13 @@ import java.util.Scanner;
 public class Board {
     String[][] board;
     String winner;
+    String player1symbol;
+    String player2symbol;
 
     //Fills in board with _ char. 
-    public Board(){
+    public Board(String a, String b){
+        player1symbol = a;
+        player2symbol = b;
         board = new String[6][7]; 
         for(int i = 0; i<6; i++)
         {
@@ -38,12 +42,12 @@ public class Board {
     //After 42(total # of spaces) - 7(number of spaces needed atleast be filled for win)
     //spaces have been filled up with initialized space count int. 
     //
-    public void playGame(String a, String b){
+    public void playMultiplayer(){
         int spacesMax = 42;
         int spacesFilled = 0; 
         int whosTurn = 0; //0 for player 1, 1 for player 2
-        String p1 = a;
-        String p2 = b; 
+        String p1 = player1symbol;
+        String p2 = player2symbol; 
         String col;
         try (Scanner scanner = new Scanner(System.in)) { // Added try catch to fix a problem that didn't stop my code from working. I was annoyed by the problems notifcation. 
             while(spacesFilled != spacesMax){
@@ -69,7 +73,7 @@ public class Board {
                 }
                 
                 if(checkWin() == true){
-                    if(winner.equals(a)){
+                    if(winner.equals(player1symbol)){
                         winner = "Player 1";
                     }
                     else{
@@ -84,6 +88,78 @@ public class Board {
             System.out.println();
         }
         
+    }
+
+    public void playSingleplayer(){
+        int spacesMax = 42;
+        int spacesFilled = 0; 
+        int whosTurn = 0; //0 for player 1, 1 for AI
+        String p1 = player1symbol;
+        int AIsymbol = 0; 
+        AI eric = new AI(AIsymbol);
+        String col;
+        try (Scanner scanner = new Scanner(System.in)) { // Added try catch to fix a problem that didn't stop my code from working. I was annoyed by the problems notifcation. 
+            while(spacesFilled != spacesMax){
+                
+                if(whosTurn == 0){
+                    
+                    System.out.println("Player 1, what column to drop chip?:");
+                    col = scanner.nextLine();
+                    int coll = Integer.parseInt(col);
+                    addToBoard(coll,p1);
+                    print();
+                    whosTurn++;
+                    spacesFilled++;
+                }
+                else{  // Fix this part. 
+                    int coll = eric.nextMove(board, p1);
+                    eric.addToBoard(coll,AIsymbol,(eric.convertToInt(board, p1)));
+                    board = convertToString(eric.addToBoard(coll,AIsymbol,(eric.convertToInt(board, p1))),p1,AIsymbol);
+                    print();
+                    whosTurn--;
+                    spacesFilled++;
+                }
+                
+                if(checkWin() == true){
+                    if(winner.equals(player1symbol)){
+                        winner = "Player 1";
+                    }
+                    else{
+                        winner = "AI Eric";
+                    }
+                    System.out.println("Winner: " + winner);
+                    break;
+                    
+                }
+            }
+        } catch (NumberFormatException e) {
+            System.out.println();
+        }
+        
+    }
+
+    public String[][] convertToString(int[][] b, String p1, int AIsym){
+        String AI = String.valueOf(AIsym);
+        String[][] n = new String[6][7];
+        for(int i = 0; i<6; i++)
+        {
+            for(int j = 0; j<7; j++)
+            {
+                if(b[i][j] == 0){
+                    n[i][j] = "_";
+                }
+                else if(b[i][j] == 1){
+                    n[i][j] = p1;
+                }
+                else{
+                    n[i][j] = AI;
+                }
+            }
+        }
+
+
+
+        return n;
     }
 
     //"Drops" symbol into column area
