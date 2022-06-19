@@ -35,9 +35,7 @@ public class AI {
                                     //Generate Random Column because no column number works
                                     return ThreadLocalRandom.current().nextInt(0, 6 + 1);
                                 }
-                                else{
-                                    break;
-                                }
+                                
                             }
                         }
                     }
