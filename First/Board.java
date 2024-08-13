@@ -113,8 +113,9 @@ public class Board {
                 }
                 else{  // Fix this part. 
                     int coll = eric.nextMove(board, p1);
-                    int [][] x = eric.addToBoard(coll,AIsymbol,(eric.convertToInt(board, p1)));
-                    board = convertToString(x,p1,AIsymbol);
+                    //int [][] x = eric.addToBoard(coll,AIsymbol,(eric.convertToInt(board, p1)));
+                    //board = convertToString(x,p1,AIsymbol);
+                    addToBoard(coll,String.valueOf(AIsymbol));
                     System.out.println("AI Eric put chip in column "+ coll + ".");
                     print();
                     whosTurn--;

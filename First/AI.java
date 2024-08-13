@@ -164,11 +164,11 @@ public class AI {
     public int[][] addToBoard(int col, int symbol, int[][] base){
         for(int i = 0; i<7; i++)
         {
-                for(int j = 5; j >= 0; j--){//Iterates up the rows of the column i
-                    if((base[j][i]==0)&&(col-1)==i){
-                        base[j][i] = symbol;
+                for(int j = 0; j <=7; j++){//Iterates up the rows of the column i
+                    if((base[i][j]==0)&&(col-1)==i){
+                        base[i][j] = symbol;
                         
-                        break;
+                        
                     }
                 }    
         }
@@ -188,7 +188,7 @@ public class AI {
                 if(b[i][j].equals(p1)){
                     matrix[i][j] = 1; 
                 }
-                else if(b[i][j].equals(String.valueOf(symbol))) {
+                else if(b[i][j].equals(symbol)) {
                     matrix[i][j] = 2;
                 }
                 else{
