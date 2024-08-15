@@ -1,14 +1,15 @@
-import java.util.Scanner;
+package PruningvsNoPrun;
 
-public class Connect4 {
+
+public class Game {
     private static final int ROWS = 6;
     private static final int COLS = 7;
     private static final char EMPTY = '_';
-    private static final char PLAYER = 'X';
-    private static final char AI = 'O';
+    private static final char Pruning = 'X';
+    private static final char NonPruning = 'O';
     private char[][] board = new char[ROWS][COLS];
-
-    public Connect4() {
+    public int globaldepth = 8;
+    public Game() {
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 board[i][j] = EMPTY;
@@ -96,39 +97,44 @@ public class Connect4 {
     }
 
     public void playGame() {
-        Scanner scanner = new Scanner(System.in);
-        boolean isPlayerTurn = true;
-        long totaltime = 0;
-        int turns = 0;
+        
+        boolean isNonPruningTurn = false;
+        long nptotaltime = 0;
+        long ptotaltime = 0;
+        int npturns = 0;
+        int pturns = 0;
         while (true) {
             printBoard();
-            if (isPlayerTurn) {
-                System.out.print("Player's turn. Choose a column (0-6): ");
-                int col = scanner.nextInt();
-                if (!dropChip(col, PLAYER)) {
+            if (isNonPruningTurn) {
+                long start1 = System.currentTimeMillis();
+                int bestMove = getBestNPMove();
+                long end1 = System.currentTimeMillis(); 
+                nptotaltime = nptotaltime + (end1-start1);
+                npturns++;
+                if (!dropChip(bestMove, NonPruning)) {
                     System.out.println("Invalid move. Try again.");
                     continue;
                 }
-                if (checkWin(PLAYER)) {
+                if (checkWin(NonPruning)) {
                     printBoard();
-                    System.out.println("Player wins!");
+                    System.out.println("NonPruning wins!");
                     break;
                 }
             } else {
                 long start1 = System.currentTimeMillis();
 
-                int bestMove = getBestMove();
+                int bestMove = getBestPMove();
 
                 long end1 = System.currentTimeMillis();      
-                System.out.println("Elapsed Time in milliseconds: "+ (end1-start1)); 
-                totaltime = totaltime + (end1-start1);
-                turns++;
+                //System.out.println("Elapsed Time in milliseconds: "+ (end1-start1)); 
+                ptotaltime = ptotaltime + (end1-start1);
+                pturns++;
 
-                dropChip(bestMove, AI);
+                dropChip(bestMove, Pruning);
                 System.out.println("AI placed a chip in column " + bestMove);
-                if (checkWin(AI)) {
+                if (checkWin(Pruning)) {
                     printBoard();
-                    System.out.println("AI wins!");
+                    System.out.println("Pruning wins!");
                     break;
                 }
             }
@@ -139,18 +145,20 @@ public class Connect4 {
                 break;
             }
 
-            isPlayerTurn = !isPlayerTurn;
+            isNonPruningTurn = !isNonPruningTurn;
         }
-        System.out.println("Time avg in milliseconds: "+ (totaltime/turns));
-        scanner.close();
+        System.out.println("Avg ms of NonPruning: " + (nptotaltime/npturns));
+        System.out.println("Avg ms of Pruning: " + (ptotaltime/pturns));
     }
 
-    public int getBestMove() {
+    //PRUNING
+
+    public int getBestPMove() {
         int bestScore = Integer.MIN_VALUE;
         int bestMove = 0;
         for (int col = 0; col < COLS; col++) {
-            if (dropChip(col, AI)) {
-                int score = minimax(board, 6, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+            if (dropChip(col, Pruning)) {
+                int score = minimaxP(board, globaldepth, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
                 undoMove(col);
                 if (score > bestScore) {
                     bestScore = score;
@@ -170,16 +178,16 @@ public class Connect4 {
         }
     }
 
-    public int minimax(char[][] board, int depth, int alpha, int beta, boolean isMaximizing) {
-        if (checkWin(AI)) return 1000;
-        if (checkWin(PLAYER)) return -1000;
+    public int minimaxP(char[][] board, int depth, int alpha, int beta, boolean isMaximizing) {
+        if (checkWin(Pruning)) return 1000;
+        if (checkWin(NonPruning)) return -1000;
         if (isBoardFull() || depth == 0) return 0;
 
         if (isMaximizing) {
             int maxEval = Integer.MIN_VALUE;
             for (int col = 0; col < COLS; col++) {
-                if (dropChip(col, AI)) {
-                    int eval = minimax(board, depth - 1, alpha, beta, false);
+                if (dropChip(col, Pruning)) {
+                    int eval = minimaxP(board, depth - 1, alpha, beta, false);
                     undoMove(col);
                     maxEval = Math.max(maxEval, eval);
                     alpha = Math.max(alpha, eval);
@@ -190,8 +198,8 @@ public class Connect4 {
         } else {
             int minEval = Integer.MAX_VALUE;
             for (int col = 0; col < COLS; col++) {
-                if (dropChip(col, PLAYER)) {
-                    int eval = minimax(board, depth - 1, alpha, beta, true);
+                if (dropChip(col, NonPruning)) {
+                    int eval = minimaxP(board, depth - 1, alpha, beta, true);
                     undoMove(col);
                     minEval = Math.min(minEval, eval);
                     beta = Math.min(beta, eval);
@@ -202,9 +210,54 @@ public class Connect4 {
         }
     }
 
+    //NON PRUNING
+
+    public int minimaxNP(char[][] board, int depth, boolean isMaximizing) {
+        if (checkWin(NonPruning)) return 1000;
+        if (checkWin(Pruning)) return -1000;
+        if (isBoardFull() || depth == 0) return 0;
+
+        if (isMaximizing) {
+            int maxEval = Integer.MIN_VALUE;
+            for (int col = 0; col < COLS; col++) {
+                if (dropChip(col, NonPruning)) {
+                    int eval = minimaxNP(board, depth - 1, false);
+                    undoMove(col);
+                    maxEval = Math.max(maxEval, eval);
+                }
+            }
+            return maxEval;
+        } else {
+            int minEval = Integer.MAX_VALUE;
+            for (int col = 0; col < COLS; col++) {
+                if (dropChip(col, Pruning)) {
+                    int eval = minimaxNP(board, depth - 1, true);
+                    undoMove(col);
+                    minEval = Math.min(minEval, eval);
+                }
+            }
+            return minEval;
+        }
+    }
+
+    public int getBestNPMove() {
+        int bestScore = Integer.MIN_VALUE;
+        int bestMove = -1;
+        for (int col = 0; col < COLS; col++) {
+            if (dropChip(col, NonPruning)) {
+                int score = minimaxNP(board, globaldepth, false);
+                undoMove(col);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = col;
+                }
+            }
+        }
+        return bestMove;
+    }
+
     public static void main(String[] args) {
-        Connect4 game = new Connect4();
+        Game game = new Game();
         game.playGame();
     }
 }
-
