@@ -117,7 +117,7 @@ public class Game {
                 }
                 if (checkWin(NonPruning)) {
                     printBoard();
-                    System.out.println("NonPrun      ing wins!");
+                    System.out.println("NonPruning wins!");
                     break;
                 }
             } else {
