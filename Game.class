@@ -1,0 +1,297 @@
+// Source code is decompiled from a .class file using FernFlower decompiler.
+package PruningvsNoPrun;
+
+public class Game {
+   private static final int ROWS = 6;
+   private static final int COLS = 7;
+   private static final char EMPTY = '_';
+   private static final char Pruning = 'X';
+   private static final char NonPruning = 'O';
+   private char[][] board = new char[6][7];
+   public int globaldepth = 8;
+
+   public Game() {
+      for(int var1 = 0; var1 < 6; ++var1) {
+         for(int var2 = 0; var2 < 7; ++var2) {
+            this.board[var1][var2] = '_';
+         }
+      }
+
+   }
+
+   public void printBoard() {
+      for(int var1 = 0; var1 < 6; ++var1) {
+         for(int var2 = 0; var2 < 7; ++var2) {
+            System.out.print(this.board[var1][var2] + " ");
+         }
+
+         System.out.println();
+      }
+
+   }
+
+   public boolean dropChip(int var1, char var2) {
+      if (var1 >= 0 && var1 < 7 && this.board[0][var1] == '_') {
+         for(int var3 = 5; var3 >= 0; --var3) {
+            if (this.board[var3][var1] == '_') {
+               this.board[var3][var1] = var2;
+               return true;
+            }
+         }
+
+         return false;
+      } else {
+         return false;
+      }
+   }
+
+   public boolean isBoardFull() {
+      for(int var1 = 0; var1 < 7; ++var1) {
+         if (this.board[0][var1] == '_') {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   public boolean checkWin(char var1) {
+      return this.checkHorizontalWin(var1) || this.checkVerticalWin(var1) || this.checkDiagonalWin(var1);
+   }
+
+   private boolean checkHorizontalWin(char var1) {
+      for(int var2 = 0; var2 < 6; ++var2) {
+         for(int var3 = 0; var3 < 4; ++var3) {
+            if (this.board[var2][var3] == var1 && this.board[var2][var3 + 1] == var1 && this.board[var2][var3 + 2] == var1 && this.board[var2][var3 + 3] == var1) {
+               return true;
+            }
+         }
+      }
+
+      return false;
+   }
+
+   private boolean checkVerticalWin(char var1) {
+      for(int var2 = 0; var2 < 3; ++var2) {
+         for(int var3 = 0; var3 < 7; ++var3) {
+            if (this.board[var2][var3] == var1 && this.board[var2 + 1][var3] == var1 && this.board[var2 + 2][var3] == var1 && this.board[var2 + 3][var3] == var1) {
+               return true;
+            }
+         }
+      }
+
+      return false;
+   }
+
+   private boolean checkDiagonalWin(char var1) {
+      for(int var2 = 0; var2 < 3; ++var2) {
+         int var3;
+         for(var3 = 0; var3 < 4; ++var3) {
+            if (this.board[var2][var3] == var1 && this.board[var2 + 1][var3 + 1] == var1 && this.board[var2 + 2][var3 + 2] == var1 && this.board[var2 + 3][var3 + 3] == var1) {
+               return true;
+            }
+         }
+
+         for(var3 = 3; var3 < 7; ++var3) {
+            if (this.board[var2][var3] == var1 && this.board[var2 + 1][var3 - 1] == var1 && this.board[var2 + 2][var3 - 2] == var1 && this.board[var2 + 3][var3 - 3] == var1) {
+               return true;
+            }
+         }
+      }
+
+      return false;
+   }
+
+   public void playGame() {
+      boolean var1 = false;
+      long var2 = 0L;
+      long var4 = 0L;
+      int var6 = 0;
+      int var7 = 0;
+
+      while(true) {
+         this.printBoard();
+         long var8;
+         int var10;
+         long var11;
+         if (var1) {
+            var8 = System.currentTimeMillis();
+            var10 = this.getBestNPMove();
+            var11 = System.currentTimeMillis();
+            var2 += var11 - var8;
+            ++var6;
+            if (!this.dropChip(var10, 'O')) {
+               System.out.println("Invalid move. Try again.");
+               continue;
+            }
+
+            if (this.checkWin('O')) {
+               this.printBoard();
+               System.out.println("NonPruning wins!");
+               break;
+            }
+         } else {
+            var8 = System.currentTimeMillis();
+            var10 = this.getBestPMove();
+            var11 = System.currentTimeMillis();
+            var4 += var11 - var8;
+            ++var7;
+            this.dropChip(var10, 'X');
+            System.out.println("AI placed a chip in column " + var10);
+            if (this.checkWin('X')) {
+               this.printBoard();
+               System.out.println("Pruning wins!");
+               break;
+            }
+         }
+
+         if (this.isBoardFull()) {
+            this.printBoard();
+            System.out.println("It's a draw!");
+            break;
+         }
+
+         var1 = !var1;
+      }
+
+      System.out.println("Avg ms of NonPruning: " + var2 / (long)var6);
+      System.out.println("Avg ms of Pruning: " + var4 / (long)var7);
+   }
+
+   public int getBestPMove() {
+      int var1 = Integer.MIN_VALUE;
+      int var2 = 0;
+
+      for(int var3 = 0; var3 < 7; ++var3) {
+         if (this.dropChip(var3, 'X')) {
+            int var4 = this.minimaxP(this.board, this.globaldepth, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+            this.undoMove(var3);
+            if (var4 > var1) {
+               var1 = var4;
+               var2 = var3;
+            }
+         }
+      }
+
+      return var2;
+   }
+
+   public void undoMove(int var1) {
+      for(int var2 = 0; var2 < 6; ++var2) {
+         if (this.board[var2][var1] != '_') {
+            this.board[var2][var1] = '_';
+            break;
+         }
+      }
+
+   }
+
+   public int minimaxP(char[][] var1, int var2, int var3, int var4, boolean var5) {
+      if (this.checkWin('X')) {
+         return 1000;
+      } else if (this.checkWin('O')) {
+         return -1000;
+      } else if (!this.isBoardFull() && var2 != 0) {
+         int var6;
+         int var7;
+         int var8;
+         if (var5) {
+            var6 = Integer.MIN_VALUE;
+
+            for(var7 = 0; var7 < 7; ++var7) {
+               if (this.dropChip(var7, 'X')) {
+                  var8 = this.minimaxP(var1, var2 - 1, var3, var4, false);
+                  this.undoMove(var7);
+                  var6 = Math.max(var6, var8);
+                  var3 = Math.max(var3, var8);
+                  if (var4 <= var3) {
+                     break;
+                  }
+               }
+            }
+
+            return var6;
+         } else {
+            var6 = Integer.MAX_VALUE;
+
+            for(var7 = 0; var7 < 7; ++var7) {
+               if (this.dropChip(var7, 'O')) {
+                  var8 = this.minimaxP(var1, var2 - 1, var3, var4, true);
+                  this.undoMove(var7);
+                  var6 = Math.min(var6, var8);
+                  var4 = Math.min(var4, var8);
+                  if (var4 <= var3) {
+                     break;
+                  }
+               }
+            }
+
+            return var6;
+         }
+      } else {
+         return 0;
+      }
+   }
+
+   public int minimaxNP(char[][] var1, int var2, boolean var3) {
+      if (this.checkWin('O')) {
+         return 1000;
+      } else if (this.checkWin('X')) {
+         return -1000;
+      } else if (!this.isBoardFull() && var2 != 0) {
+         int var4;
+         int var5;
+         int var6;
+         if (var3) {
+            var4 = Integer.MIN_VALUE;
+
+            for(var5 = 0; var5 < 7; ++var5) {
+               if (this.dropChip(var5, 'O')) {
+                  var6 = this.minimaxNP(var1, var2 - 1, false);
+                  this.undoMove(var5);
+                  var4 = Math.max(var4, var6);
+               }
+            }
+
+            return var4;
+         } else {
+            var4 = Integer.MAX_VALUE;
+
+            for(var5 = 0; var5 < 7; ++var5) {
+               if (this.dropChip(var5, 'X')) {
+                  var6 = this.minimaxNP(var1, var2 - 1, true);
+                  this.undoMove(var5);
+                  var4 = Math.min(var4, var6);
+               }
+            }
+
+            return var4;
+         }
+      } else {
+         return 0;
+      }
+   }
+
+   public int getBestNPMove() {
+      int var1 = Integer.MIN_VALUE;
+      int var2 = -1;
+
+      for(int var3 = 0; var3 < 7; ++var3) {
+         if (this.dropChip(var3, 'O')) {
+            int var4 = this.minimaxNP(this.board, this.globaldepth, false);
+            this.undoMove(var3);
+            if (var4 > var1) {
+               var1 = var4;
+               var2 = var3;
+            }
+         }
+      }
+
+      return var2;
+   }
+
+   public static void main(String[] var0) {
+      Game var1 = new Game();
+      var1.playGame();
+   }
+}
